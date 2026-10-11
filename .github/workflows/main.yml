@@ -9,10 +9,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Unzip Project Files
+      - name: Unzip and List Everything
         run: |
+          echo "=== Unzipping Files ==="
           unzip Tarjemly_Ready_To_Build-2.zip -d project_files
-          echo "Looking for build.gradle..."
+          
+          echo "=== Showing Directory Structure ==="
+          find project_files -maxdepth 3
+          
+          echo "=== Searching for build.gradle ==="
           find project_files -name "build.gradle"
 
       - name: Set up JDK 17
@@ -23,7 +28,12 @@ jobs:
 
       - name: Build Android APK
         run: |
-          cd $(dirname $(find project_files -name "build.gradle" | head -n 1))
+          GRADLE_PATH=$(find project_files -name "build.gradle" | head -n 1)
+          if [ -z "$GRADLE_PATH" ]; then
+            echo "ERROR: build.gradle not found anywhere in the zip!"
+            exit 1
+          fi
+          cd $(dirname "$GRADLE_PATH")
           if [ -f "./gradlew" ]; then
             chmod +x gradlew
             ./gradlew assembleDebug
