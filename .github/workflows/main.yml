@@ -1,0 +1,38 @@
+name: Build Tarjemly APK
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Unzip Project Files
+        run: |
+          unzip Tarjemly_Ready_To_Build-2.zip -d project_files
+          echo "Looking for build.gradle..."
+          find project_files -name "build.gradle"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Android APK
+        run: |
+          cd $(dirname $(find project_files -name "build.gradle" | head -n 1))
+          if [ -f "./gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          else
+            gradle assembleDebug
+          fi
+
+      - name: Upload Finished APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tarjemly-App
+          path: "**/build/outputs/apk/debug/*.apk"
